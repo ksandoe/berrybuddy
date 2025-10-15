@@ -1,0 +1,9 @@
+# Ignore node modules and environment files
+node_modules/
+.env
+.DS_Store
+# Build artifacts
+/dist/
+/build/
+/.next/
+/out/
