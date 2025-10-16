@@ -194,6 +194,11 @@ paths:
       parameters:
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/Offset'
+        - name: berry_id
+          in: query
+          required: false
+          schema: { type: string, format: uuid }
+          description: Filter vendors that have prices for the specified berry
       responses:
         '200':
           description: Array of vendors

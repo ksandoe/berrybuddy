@@ -6,6 +6,9 @@ import VendorDetail from '@/pages/VendorDetail'
 import Profile from '@/pages/Profile'
 import RequestCode from '@/pages/RequestCode'
 import VerifyCode from '@/pages/VerifyCode'
+import { Toaster } from '@/components/ui/toaster'
+import Logo from '@/components/Logo'
+import { Button } from '@/components/ui/button'
 
 function AuthedRoute({ children }: { children: JSX.Element }) {
   const { session, loading } = useAuth()
@@ -14,15 +17,31 @@ function AuthedRoute({ children }: { children: JSX.Element }) {
 }
 
 function Layout({ children }: { children: React.ReactNode }) {
+  const { session } = useAuth()
   return (
     <div className="min-h-screen">
       <header className="border-b">
-        <div className="container h-14 flex items-center justify-between">
-          <Link to="/" className="font-semibold text-primary">Berry Buddy</Link>
-          <nav className="flex gap-4">
-            <Link to="/berries" className="hover:underline">Berries</Link>
-            <Link to="/vendors" className="hover:underline">Vendors</Link>
-            <Link to="/profile" className="hover:underline">Profile</Link>
+        <div className="container h-14 flex items-center justify-between gap-4">
+          <Link to="/" className="flex items-center gap-2">
+            <Logo className="h-6" />
+            <span className="font-semibold">Berry Buddy</span>
+          </Link>
+          <nav className="flex items-center gap-2">
+            <Button asChild variant="ghost">
+              <Link to="/berries">Berries</Link>
+            </Button>
+            <Button asChild variant="ghost">
+              <Link to="/vendors">Vendors</Link>
+            </Button>
+            {session ? (
+              <Button asChild size="sm">
+                <Link to="/profile">Profile</Link>
+              </Button>
+            ) : (
+              <Button asChild size="sm">
+                <Link to="/auth/request">Sign in</Link>
+              </Button>
+            )}
           </nav>
         </div>
       </header>
@@ -52,6 +71,7 @@ export default function App() {
           />
         </Routes>
       </Layout>
+      <Toaster />
     </AuthProvider>
   )
 }

@@ -14,9 +14,12 @@
     "baseUrl": ".",
     "paths": {
       "@/components/*": ["src/components/*"],
+      "@/components/hooks/*": ["src/components/hooks/*"],
+      "@/components/components/*": ["src/components/components/*"],
       "@/pages/*": ["src/pages/*"],
       "@/lib/*": ["src/lib/*"],
-      "@/context/*": ["src/context/*"]
+      "@/context/*": ["src/context/*"],
+      "@/hooks/*": ["src/hooks/*"]
     }
   },
   "include": ["src"]

@@ -12,11 +12,26 @@ router.get('/', async (req, res, next) => {
     const offset = Math.max(parseInt(req.query.offset || '0', 10), 0);
     const from = offset;
     const to = offset + limit - 1;
+    const berryId = req.query.berry_id || null;
 
-    const { data: vendors, error } = await supabase
-      .from('vendor')
-      .select('*')
-      .range(from, to);
+    // Optional: filter vendors by berry via price table relationship
+    let vendorIdsFilter = null;
+    if (berryId) {
+      const { data: priceRows, error: berrErr } = await supabase
+        .from('price')
+        .select('vendor_id')
+        .eq('berry_id', berryId);
+      if (berrErr) return next(berrErr);
+      const ids = Array.from(new Set((priceRows || []).map(r => r.vendor_id))).filter(Boolean);
+      if (ids.length === 0) return res.json([]);
+      vendorIdsFilter = ids;
+    }
+
+    let vq = supabase.from('vendor').select('*');
+    if (vendorIdsFilter) {
+      vq = vq.in('vendor_id', vendorIdsFilter);
+    }
+    const { data: vendors, error } = await vq.range(from, to);
 
     if (error) return next(error);
     const list = vendors || [];
