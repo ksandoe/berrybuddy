@@ -15,7 +15,8 @@ Out of Scope:
 
 Technical Architecture
 Frontend (Client):
-•	React (PWA, mobile-first design)
+•	React + Vite + TypeScript (PWA, mobile-first design)
+•	TailwindCSS + shadcn/ui components (Radix primitives, accessible + customizable)
 •	React Router for navigation
 •	Deployed via AWS Amplify
 Backend (API Layer):
@@ -24,13 +25,17 @@ o	Serves as the single gateway for all data operations
 o	Handles authentication, validation, and routing
 o	Organizes CRUD endpoints by feature area (e.g., /vendors, /berries, /reviews)
 o	Middleware for logging, error handling, and request validation
-•	All CRUD operations go through the API — students must not call Supabase directly from the frontend
+•	All CRUD operations go through the API — the frontend must not call Supabase DB directly
 Database & Authentication:
 •	Supabase (Postgres-based) for:
 o	Data persistence
-o	Authentication (email/password, role-based access)
+o	Authentication (OTP email code; role-based access)
 o	Realtime subscriptions (optional for v1)
 •	API connects to Supabase using Supabase client or pg driver under the hood
+•	Authentication approach:
+  •	Frontend may call Supabase Auth (OTP email code) directly to obtain a session/JWT
+  •	API also exposes OTP wrappers (/auth/otp/start, /auth/otp/verify) for future clients and policy controls
+  •	All protected API routes require Authorization: Bearer <JWT>
 Deployment Strategy:
 •	Frontend: AWS Amplify (continuous deployment from GitHub)
 •	API Layer: Deployed as serverless functions:

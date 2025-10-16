@@ -2,14 +2,14 @@ Task List
 Epic: Discover Berries
 •	Task: Build Map View (Frontend)
 o	User Story: As a Shopper, I want to see nearby berry sources on a map.
-o	Acceptance Criteria: Markers show vendor name, average rating, last update. Data is fetched via GET /vendors.
+o	Acceptance Criteria: Markers show vendor name, quality_score (avg rating), and last_update (latest review/price timestamp). Data is fetched via GET /vendors.
 •	Task: Create GET /vendors API Endpoint
-o	Acceptance Criteria: Returns JSON list of vendors with name, location, quality score, last update; status 200 for success; 500 for errors.
+o	Acceptance Criteria: Returns JSON list of vendors with name, location (lat/long, city/state), quality_score (avg review.rating), last_update (max of review.created_at and price.reported_at); status 200 for success; 500 for errors.
 •	Task: Implement List View + Sorting & Filters (Frontend)
 o	User Story: As a Shopper, I want to sort and filter berry listings.
 o	Acceptance Criteria: Sort by distance, price, quality; filter by berry type; data from GET /vendors?type=blueberry.
 •	Task: Create GET /vendors/:id API Endpoint
-o	Acceptance Criteria: Returns JSON for a single vendor including details, recent reviews, photos, and specials.
+o	Acceptance Criteria: Returns JSON for a single vendor including core details, quality_score, last_update, recent_reviews (latest 5), recent_photos (latest 5), and specials (placeholder for v1).
 ________________________________________
 Epic: Shop Vendors
 •	Task: Vendor Profile Page (Frontend)
@@ -59,10 +59,9 @@ o	Acceptance Criteria: Returns static or seeded data about berry seasonality by 
 ________________________________________
 Shared / Supporting
 •	Task: Authentication (Frontend + API)
-o	User Story: As a User, I want to sign up/sign in.
-o	Acceptance Criteria: API returns JWT; protected routes require token.
-•	Task: Create POST /auth/signup and POST /auth/login API Endpoints
+o	User Story: As a User, I want to sign in with a one-time code sent to my email.
+o	Acceptance Criteria: Frontend uses Supabase JS OTP (email code) to obtain JWT; API protected routes require Bearer token.
+•	Task: Create POST /auth/otp/start and POST /auth/otp/verify API Endpoints
 o	Acceptance Criteria:
-	Signup creates user in Supabase, returns token.
-	Login validates credentials, returns token.
-	Tokens required for vendor CRUD endpoints.
+	Start sends code to email; Verify exchanges code for session (JWT).
+	Tokens required for vendor CRUD and other write endpoints.

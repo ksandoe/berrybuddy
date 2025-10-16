@@ -2,12 +2,8 @@ openapi: 3.0.3
 info:
   title: Berry Buddy API
   version: "0.1.0"
-  description: |
-    A minimal API that fronts Supabase Postgres and forces all CRUD through the API.
-    Authenticate with Supabase, then call endpoints with `Authorization: Bearer <JWT>`.
 servers:
-  - url: http://localhost:8080
-    description: Local dev
+  - url: http://localhost:5000
 tags:
   - name: Health
   - name: Profiles
@@ -16,9 +12,11 @@ tags:
   - name: Prices
   - name: Reviews
   - name: Photos
+  - name: Auth
 paths:
   /health:
     get:
+      operationId: healthCheck
       tags: [Health]
       summary: Health check (no auth)
       security: []
@@ -32,8 +30,46 @@ paths:
                 properties:
                   ok: { type: boolean }
                   now: { type: string, format: date-time }
+  /auth/otp/start:
+    post:
+      operationId: authOtpStart
+      tags: [Auth]
+      summary: Start email code OTP (no auth)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OTPStartRequest' }
+      responses:
+        '200':
+          description: Code sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+  /auth/otp/verify:
+    post:
+      operationId: authOtpVerify
+      tags: [Auth]
+      summary: Verify email code and return session (no auth)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OTPVerifyRequest' }
+      responses:
+        '200':
+          description: Session created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthSession' }
   /profiles/me:
     get:
+      operationId: profilesMeGet
       tags: [Profiles]
       summary: Get my profile
       responses:
@@ -45,6 +81,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
     put:
+      operationId: profilesMePut
       tags: [Profiles]
       summary: Upsert my profile
       requestBody:
@@ -66,8 +103,10 @@ paths:
               schema: { $ref: '#/components/schemas/AppProfile' }
   /berries:
     get:
+      operationId: berriesList
       tags: [Berries]
       summary: List berries
+      security: []
       parameters:
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/Offset'
@@ -80,6 +119,7 @@ paths:
                 type: array
                 items: { $ref: '#/components/schemas/Berry' }
     post:
+      operationId: berriesCreate
       tags: [Berries]
       summary: Create berry
       requestBody:
@@ -99,8 +139,10 @@ paths:
               schema: { $ref: '#/components/schemas/Berry' }
   /berries/{id}:
     get:
+      operationId: berriesGet
       tags: [Berries]
       summary: Get berry by id
+      security: []
       parameters:
         - $ref: '#/components/parameters/IdParam'
       responses:
@@ -111,6 +153,7 @@ paths:
               schema: { $ref: '#/components/schemas/Berry' }
         '404': { $ref: '#/components/responses/NotFound' }
     patch:
+      operationId: berriesUpdate
       tags: [Berries]
       summary: Update berry
       parameters:
@@ -130,6 +173,7 @@ paths:
               schema: { $ref: '#/components/schemas/Berry' }
         '404': { $ref: '#/components/responses/NotFound' }
     delete:
+      operationId: berriesDelete
       tags: [Berries]
       summary: Delete berry
       parameters:
@@ -143,8 +187,10 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
   /vendors:
     get:
+      operationId: vendorsList
       tags: [Vendors]
       summary: List vendors
+      security: []
       parameters:
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/Offset'
@@ -157,6 +203,7 @@ paths:
                 type: array
                 items: { $ref: '#/components/schemas/Vendor' }
     post:
+      operationId: vendorsCreate
       tags: [Vendors]
       summary: Create vendor
       requestBody:
@@ -172,8 +219,10 @@ paths:
               schema: { $ref: '#/components/schemas/Vendor' }
   /vendors/{id}:
     get:
+      operationId: vendorsGet
       tags: [Vendors]
       summary: Get vendor by id
+      security: []
       parameters:
         - $ref: '#/components/parameters/IdParam'
       responses:
@@ -184,6 +233,7 @@ paths:
               schema: { $ref: '#/components/schemas/Vendor' }
         '404': { $ref: '#/components/responses/NotFound' }
     patch:
+      operationId: vendorsUpdate
       tags: [Vendors]
       summary: Update vendor
       parameters:
@@ -200,6 +250,7 @@ paths:
               schema: { $ref: '#/components/schemas/Vendor' }
         '404': { $ref: '#/components/responses/NotFound' }
     delete:
+      operationId: vendorsDelete
       tags: [Vendors]
       summary: Delete vendor
       parameters:
@@ -213,8 +264,10 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
   /prices:
     get:
+      operationId: pricesList
       tags: [Prices]
       summary: List prices
+      security: []
       parameters:
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/Offset'
@@ -227,6 +280,7 @@ paths:
                 type: array
                 items: { $ref: '#/components/schemas/Price' }
     post:
+      operationId: pricesCreate
       tags: [Prices]
       summary: Create price (reported_by = current user)
       requestBody:
@@ -242,6 +296,7 @@ paths:
               schema: { $ref: '#/components/schemas/Price' }
   /prices/{id}:
     patch:
+      operationId: pricesUpdate
       tags: [Prices]
       summary: Update price (owner-only)
       parameters:
@@ -262,6 +317,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
     delete:
+      operationId: pricesDelete
       tags: [Prices]
       summary: Delete price (owner-only)
       parameters:
@@ -279,8 +335,10 @@ paths:
               schema: { $ref: '#/components/schemas/Error' }
   /reviews:
     get:
+      operationId: reviewsList
       tags: [Reviews]
       summary: List reviews
+      security: []
       parameters:
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/Offset'
@@ -293,6 +351,7 @@ paths:
                 type: array
                 items: { $ref: '#/components/schemas/Review' }
     post:
+      operationId: reviewsCreate
       tags: [Reviews]
       summary: Create review (reported_by = current user)
       requestBody:
@@ -308,6 +367,7 @@ paths:
               schema: { $ref: '#/components/schemas/Review' }
   /reviews/{id}:
     patch:
+      operationId: reviewsUpdate
       tags: [Reviews]
       summary: Update review (owner-only)
       parameters:
@@ -328,6 +388,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
     delete:
+      operationId: reviewsDelete
       tags: [Reviews]
       summary: Delete review (owner-only)
       parameters:
@@ -345,8 +406,10 @@ paths:
               schema: { $ref: '#/components/schemas/Error' }
   /photos:
     get:
+      operationId: photosList
       tags: [Photos]
       summary: List photos
+      security: []
       parameters:
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/Offset'
@@ -359,6 +422,7 @@ paths:
                 type: array
                 items: { $ref: '#/components/schemas/Photo' }
     post:
+      operationId: photosCreate
       tags: [Photos]
       summary: Create photo (uploaded_by = current user)
       requestBody:
@@ -374,6 +438,7 @@ paths:
               schema: { $ref: '#/components/schemas/Photo' }
   /photos/{id}:
     patch:
+      operationId: photosUpdate
       tags: [Photos]
       summary: Update photo (owner-only)
       parameters:
@@ -394,6 +459,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
     delete:
+      operationId: photosDelete
       tags: [Photos]
       summary: Delete photo (owner-only)
       parameters:
@@ -404,11 +470,6 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Photo' }
-        '404':
-          description: Not found or not owner
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/Error' }
 components:
   securitySchemes:
     bearerAuth:
@@ -443,6 +504,29 @@ components:
       properties:
         error: { type: string }
         message: { type: string }
+    OTPStartRequest:
+      type: object
+      required: [email]
+      properties:
+        email: { type: string, format: email }
+        create_if_missing: { type: boolean, description: 'Defaults to true' }
+    OTPVerifyRequest:
+      type: object
+      required: [email, token]
+      properties:
+        email: { type: string, format: email }
+        token: { type: string, minLength: 4, maxLength: 12 }
+    AuthSession:
+      type: object
+      properties:
+        session:
+          type: object
+          properties:
+            access_token: { type: string }
+            token_type: { type: string }
+            expires_in: { type: integer }
+        user:
+          type: object
     AppProfile:
       type: object
       properties:

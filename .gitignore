@@ -7,3 +7,11 @@ node_modules/
 /build/
 /.next/
 /out/
+
+# API envs
+api/.env
+
+# Client envs
+client/.env
+client/.env.local
+client/.env.*.local
