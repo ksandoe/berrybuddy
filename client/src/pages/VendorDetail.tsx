@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { apiGet, apiAuthed, apiAuthedForm } from '@/lib/api'
+import { apiGet, apiAuthed, apiAuthedForm, apiAuthedFormWithProgress } from '@/lib/api'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -71,6 +71,7 @@ export default function VendorDetail() {
   const [allPhotos, setAllPhotos] = useState<Photo[]>([])
   const [showReviewModal, setShowReviewModal] = useState(false)
   const [file, setFile] = useState<File | null>(null)
+  const [uploadPct, setUploadPct] = useState<number>(0)
 
   function RatingStars({ value, onChange }: { value: number; onChange: (v: number) => void }) {
     return (
@@ -88,6 +89,23 @@ export default function VendorDetail() {
         ))}
       </div>
     )
+  }
+
+  function onFileSelected(f: File | null) {
+    if (!f) { setFile(null); return }
+    const isImage = f.type.startsWith('image/')
+    const underLimit = f.size <= 10 * 1024 * 1024 // 10MB, matches server limit
+    if (!isImage) {
+      toast({ title: 'Unsupported file', description: 'Please select an image file.' })
+      setFile(null)
+      return
+    }
+    if (!underLimit) {
+      toast({ title: 'File too large', description: 'Max size is 10MB.' })
+      setFile(null)
+      return
+    }
+    setFile(f)
   }
 
   function haversineMeters(a: { lat: number; lon: number }, b: { lat: number; lon: number }) {
@@ -216,7 +234,8 @@ export default function VendorDetail() {
           form.append('vendor_id', id)
           if (berryId) form.append('berry_id', berryId)
           form.append('review_id', created.review_id)
-          const createdPhoto = await apiAuthedForm<Photo>('/photos/upload', form, 'POST')
+          setUploadPct(0)
+          const createdPhoto = await apiAuthedFormWithProgress<Photo>('/photos/upload', form, (pct) => setUploadPct(pct), 'POST')
           setAllPhotos((p) => [{
             photo_id: createdPhoto.photo_id,
             vendor_id: id,
@@ -227,6 +246,8 @@ export default function VendorDetail() {
           }, ...p])
         } catch (err: any) {
           toast({ title: 'Photo upload failed', description: String(err?.message || err) })
+        } finally {
+          setUploadPct(0)
         }
       }
       setComment('')
@@ -301,7 +322,6 @@ export default function VendorDetail() {
             <li key={r.review_id} className="border rounded-md p-3">
               <div className="flex items-center justify-between gap-2">
                 <div className="font-medium">Rating: {r.rating}/5</div>
-                <Button size="sm" variant="outline" onClick={() => toast({ title: 'Reported', description: 'Thanks for reporting this review.' })}>Report</Button>
               </div>
               <div className="text-xs text-muted-foreground mt-0.5">
                 Reviewer: {(() => {
@@ -386,8 +406,11 @@ export default function VendorDetail() {
               <div className="grid md:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm mb-1">Upload photo (optional)</label>
-                  <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} className="block w-full text-sm" />
+                  <input type="file" accept="image/*" onChange={(e) => onFileSelected(e.target.files?.[0] || null)} className="block w-full text-sm" />
                   {file && <div className="text-xs text-muted-foreground mt-1">Selected: {file.name}</div>}
+                  {uploadPct > 0 && (
+                    <div className="text-xs text-muted-foreground mt-1">Uploading… {uploadPct}%</div>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm mb-1">Photo URL (optional)</label>

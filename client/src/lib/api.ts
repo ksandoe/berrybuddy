@@ -43,3 +43,27 @@ export async function apiAuthedForm<T>(path: string, form: FormData, method: 'PO
   if (!res.ok) throw new Error(await res.text())
   return res.json()
 }
+
+export async function apiAuthedFormWithProgress<T>(path: string, form: FormData, onProgress?: (pct: number) => void, method: 'POST'|'PUT' = 'POST'): Promise<T> {
+  const headers = await authHeader()
+  return new Promise<T>((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open(method, `${API_BASE}${path}`)
+    // set auth header if present
+    Object.entries(headers).forEach(([k, v]) => xhr.setRequestHeader(k, String(v)))
+    if (xhr.upload && onProgress) {
+      xhr.upload.onprogress = (e) => {
+        if (!e.lengthComputable) return
+        const pct = Math.round((e.loaded / e.total) * 100)
+        onProgress(pct)
+      }
+    }
+    xhr.onload = () => {
+      const ok = xhr.status >= 200 && xhr.status < 300
+      if (!ok) return reject(new Error(xhr.responseText || `HTTP ${xhr.status}`))
+      try { resolve(JSON.parse(xhr.responseText)) } catch { resolve(undefined as unknown as T) }
+    }
+    xhr.onerror = () => reject(new Error('Network error'))
+    xhr.send(form)
+  })
+}
