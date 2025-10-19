@@ -2,6 +2,7 @@ import { Routes, Route, Link, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from '@/context/AuthContext'
 import VendorsList from '@/pages/VendorsList'
 import BerriesList from '@/pages/BerriesList'
+import BerryDetail from '@/pages/BerryDetail'
 import VendorDetail from '@/pages/VendorDetail'
 import Profile from '@/pages/Profile'
 import RequestCode from '@/pages/RequestCode'
@@ -9,6 +10,7 @@ import VerifyCode from '@/pages/VerifyCode'
 import { Toaster } from '@/components/ui/toaster'
 import Logo from '@/components/Logo'
 import { Button } from '@/components/ui/button'
+import VendorsMap from '@/pages/VendorsMap'
 
 function AuthedRoute({ children }: { children: JSX.Element }) {
   const { session, loading } = useAuth()
@@ -27,6 +29,9 @@ function Layout({ children }: { children: React.ReactNode }) {
             <span className="font-semibold">Berry Buddy</span>
           </Link>
           <nav className="flex items-center gap-2">
+            <Button asChild variant="ghost">
+              <Link to="/">Map</Link>
+            </Button>
             <Button asChild variant="ghost">
               <Link to="/berries">Berries</Link>
             </Button>
@@ -55,8 +60,9 @@ export default function App() {
     <AuthProvider>
       <Layout>
         <Routes>
-          <Route path="/" element={<Navigate to="/vendors" replace />} />
+          <Route path="/" element={<VendorsMap />} />
           <Route path="/berries" element={<BerriesList />} />
+          <Route path="/berries/:id" element={<BerryDetail />} />
           <Route path="/vendors" element={<VendorsList />} />
           <Route path="/vendors/:id" element={<VendorDetail />} />
           <Route path="/auth/request" element={<RequestCode />} />

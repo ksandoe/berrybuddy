@@ -30,9 +30,10 @@ export default function VendorsList() {
 
   // filter UI state
   const [berryId, setBerryId] = useState<string>('')
-  const [city, setCity] = useState<string>('')
   const [minQuality, setMinQuality] = useState<string>('')
   const [applyKey, setApplyKey] = useState<number>(0)
+  const [sortBy, setSortBy] = useState<'distance'|'quality'|'price'|'none'>('none')
+  const origin = { lat: 39.7285, lon: -121.8375 } // Chico, CA
 
   // initial load of berries for filter dropdown
   useEffect(() => {
@@ -55,15 +56,40 @@ export default function VendorsList() {
     return () => { mounted = false }
   }, [applyKey, berryId])
 
+  // No geolocation; distances are computed from Chico, CA
+
   if (loading) return <div className="container py-6">Loading vendors…</div>
   if (error) return <div className="container py-6 text-red-600">{error}</div>
 
-  // client-side filtering (API does not accept filters yet)
   const filtered = vendors.filter(v => {
-    const cityOk = city ? (`${v.city ?? ''} ${v.state ?? ''}`.toLowerCase().includes(city.toLowerCase())) : true
     const qualityOk = minQuality ? ((v.quality_score ?? -1) >= Number(minQuality)) : true
     // TODO: berryId filter requires API support to know vendor-berry relation
-    return cityOk && qualityOk
+    return qualityOk
+  })
+
+  function haversineMeters(a: { lat: number; lon: number }, b: { lat: number; lon: number }) {
+    const R = 6371000
+    const dLat = (b.lat - a.lat) * Math.PI / 180
+    const dLon = (b.lon - a.lon) * Math.PI / 180
+    const la1 = a.lat * Math.PI / 180
+    const la2 = b.lat * Math.PI / 180
+    const sinDLat = Math.sin(dLat / 2)
+    const sinDLon = Math.sin(dLon / 2)
+    const h = sinDLat * sinDLat + Math.cos(la1) * Math.cos(la2) * sinDLon * sinDLon
+    return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)))
+  }
+
+  const sorted = [...filtered].sort((a, b) => {
+    if (sortBy === 'quality') {
+      return (b.quality_score ?? -Infinity) - (a.quality_score ?? -Infinity)
+    }
+    if (sortBy === 'distance') {
+      const da = (typeof a.latitude === 'number' && typeof a.longitude === 'number') ? haversineMeters(origin, { lat: a.latitude!, lon: a.longitude! }) : Infinity
+      const db = (typeof b.latitude === 'number' && typeof b.longitude === 'number') ? haversineMeters(origin, { lat: b.latitude!, lon: b.longitude! }) : Infinity
+      return da - db
+    }
+    // price placeholder until API provides price field on /vendors
+    return 0
   })
 
   return (
@@ -89,20 +115,30 @@ export default function VendorsList() {
           </Select>
         </div>
         <div>
-          <label className="block text-sm mb-1">City</label>
-          <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="e.g. Seattle" />
-        </div>
-        <div>
           <label className="block text-sm mb-1">Min quality</label>
           <Input type="number" min={0} max={5} step={0.1} value={minQuality} onChange={(e) => setMinQuality(e.target.value)} placeholder="e.g. 4" />
         </div>
+        <div>
+          <label className="block text-sm mb-1">Sort by</label>
+          <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
+            <SelectTrigger>
+              <SelectValue placeholder="None" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">None</SelectItem>
+              <SelectItem value="distance">Distance</SelectItem>
+              <SelectItem value="quality">Quality</SelectItem>
+              <SelectItem value="price" disabled>Price (coming soon)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <div className="flex items-end gap-2">
           <Button onClick={() => { setLoading(true); setApplyKey((k) => k + 1) }}>Apply</Button>
-          <Button variant="outline" onClick={() => { setCity(''); setMinQuality(''); setBerryId(''); setApplyKey((k) => k + 1) }}>Clear</Button>
+          <Button variant="outline" onClick={() => { setMinQuality(''); setBerryId(''); setApplyKey((k) => k + 1) }}>Clear</Button>
         </div>
       </div>
       <div className="grid md:grid-cols-2 gap-4">
-        {filtered.map(v => (
+        {sorted.map(v => (
           <Card key={v.vendor_id}>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
@@ -116,7 +152,17 @@ export default function VendorsList() {
               </CardDescription>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
-              Quality: {v.quality_score ?? '—'} · Last update: {v.last_update ? new Date(v.last_update).toLocaleString() : '—'}
+              {(() => {
+                const parts: string[] = []
+                parts.push(`Quality: ${v.quality_score ?? '—'}`)
+                parts.push(`Last update: ${v.last_update ? new Date(v.last_update).toLocaleString() : '—'}`)
+                if (typeof v.latitude === 'number' && typeof v.longitude === 'number') {
+                  const d = haversineMeters(origin, { lat: v.latitude, lon: v.longitude })
+                  const distStr = d >= 1000 ? `${(d/1000).toFixed(1)} km` : `${Math.round(d)} m`
+                  parts.push(`Distance from Chico: ${distStr}`)
+                }
+                return parts.join(' · ')
+              })()}
             </CardContent>
           </Card>
         ))}

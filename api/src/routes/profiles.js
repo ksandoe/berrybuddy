@@ -62,4 +62,29 @@ router.put('/me', requireAuth, async (req, res, next) => {
   }
 });
 
+// GET /profiles?ids=a,b,c
+router.get('/', async (req, res, next) => {
+  try {
+    if (!supabase) {
+      return res.status(500).json({ error: 'CONFIG_ERROR', message: 'Supabase is not configured. Set SUPABASE_URL and SUPABASE_SECRET_KEY in .env.' });
+    }
+    const idsParam = (req.query.ids || '').toString().trim();
+    if (!idsParam) {
+      return res.json([]);
+    }
+    const ids = idsParam.split(',').map(s => s.trim()).filter(Boolean);
+    if (ids.length === 0) return res.json([]);
+
+    const { data, error } = await supabase
+      .from('app_profile')
+      .select('id, display_name')
+      .in('id', ids);
+
+    if (error) return next(error);
+    res.json(data || []);
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;

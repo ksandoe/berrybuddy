@@ -80,6 +80,27 @@ paths:
               schema: { $ref: '#/components/schemas/AppProfile' }
         '404':
           $ref: '#/components/responses/NotFound'
+  /profiles:
+    get:
+      operationId: profilesByIds
+      tags: [Profiles]
+      summary: Get profiles by comma-separated IDs
+      security: []
+      parameters:
+        - name: ids
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Comma-separated list of user IDs (UUIDs)
+      responses:
+        '200':
+          description: Array of profiles
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/AppProfile' }
     put:
       operationId: profilesMePut
       tags: [Profiles]
