@@ -462,6 +462,42 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Photo' }
+  /photos/upload:
+    post:
+      operationId: photosUpload
+      tags: [Photos]
+      summary: Upload a photo file to storage and create a photo record (owner-only)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, vendor_id]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                vendor_id:
+                  type: string
+                  format: uuid
+                berry_id:
+                  type: string
+                  format: uuid
+                  nullable: true
+                review_id:
+                  type: string
+                  format: uuid
+                  nullable: true
+                caption:
+                  type: string
+                  nullable: true
+      responses:
+        '201':
+          description: Uploaded and created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Photo' }
   /photos/{id}:
     patch:
       operationId: photosUpdate

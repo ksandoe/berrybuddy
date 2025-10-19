@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { apiGet, apiAuthed } from '@/lib/api'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { apiGet, apiAuthed, apiAuthedForm } from '@/lib/api'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -70,6 +70,7 @@ export default function VendorDetail() {
   const [profilesMap, setProfilesMap] = useState<Record<string, AppProfile>>({})
   const [allPhotos, setAllPhotos] = useState<Photo[]>([])
   const [showReviewModal, setShowReviewModal] = useState(false)
+  const [file, setFile] = useState<File | null>(null)
 
   function RatingStars({ value, onChange }: { value: number; onChange: (v: number) => void }) {
     return (
@@ -202,7 +203,31 @@ export default function VendorDetail() {
             thumbnail: createdPhoto.thumbnail ?? null,
             url: createdPhoto.url,
           }, ...p])
-        } catch {}
+        } catch (err: any) {
+          toast({ title: 'Photo URL failed to save', description: String(err?.message || err) })
+        }
+      }
+
+      // If a file was selected, upload it
+      if (file) {
+        try {
+          const form = new FormData()
+          form.append('file', file)
+          form.append('vendor_id', id)
+          if (berryId) form.append('berry_id', berryId)
+          form.append('review_id', created.review_id)
+          const createdPhoto = await apiAuthedForm<Photo>('/photos/upload', form, 'POST')
+          setAllPhotos((p) => [{
+            photo_id: createdPhoto.photo_id,
+            vendor_id: id,
+            review_id: created.review_id,
+            photo_url: createdPhoto.photo_url,
+            thumbnail: createdPhoto.thumbnail ?? null,
+            url: createdPhoto.url,
+          }, ...p])
+        } catch (err: any) {
+          toast({ title: 'Photo upload failed', description: String(err?.message || err) })
+        }
       }
       setComment('')
       setPhotoUrl('')
@@ -213,6 +238,7 @@ export default function VendorDetail() {
       setPriceNote('')
       setPriceInput('')
       setUnitType('')
+      setFile(null)
       toast({ title: 'Review posted' })
     } catch (err: any) {
       toast({ title: 'Failed to post review', description: String(err?.message || err) })
@@ -302,9 +328,10 @@ export default function VendorDetail() {
       )}
 
       <Dialog open={showReviewModal} onOpenChange={setShowReviewModal}>
-        <DialogContent className="sm:max-w-xl">
+        <DialogContent className="sm:max-w-xl" aria-describedby="review-dialog-desc">
           <DialogHeader>
             <DialogTitle>Add a review</DialogTitle>
+            <DialogDescription id="review-dialog-desc">Post a review with optional photo.</DialogDescription>
           </DialogHeader>
           {session ? (
             <form onSubmit={(e) => { submitReview(e); }} className="space-y-4">
@@ -355,10 +382,17 @@ export default function VendorDetail() {
                 <Input value={priceNote} onChange={(e) => setPriceNote(e.target.value)} placeholder="e.g. $6 / pint" />
               </div>
 
-              {/* Photo URL row */}
-              <div>
-                <label className="block text-sm mb-1">Photo URL (optional)</label>
-                <Input value={photoUrl} onChange={(e) => setPhotoUrl(e.target.value)} placeholder="https://...jpg" />
+              {/* Image upload row */}
+              <div className="grid md:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm mb-1">Upload photo (optional)</label>
+                  <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} className="block w-full text-sm" />
+                  {file && <div className="text-xs text-muted-foreground mt-1">Selected: {file.name}</div>}
+                </div>
+                <div>
+                  <label className="block text-sm mb-1">Photo URL (optional)</label>
+                  <Input value={photoUrl} onChange={(e) => setPhotoUrl(e.target.value)} placeholder="https://...jpg" />
+                </div>
               </div>
 
               <div className="flex items-center gap-3">
@@ -375,9 +409,10 @@ export default function VendorDetail() {
       </Dialog>
 
       <Dialog open={!!previewUrl} onOpenChange={(open) => !open && setPreviewUrl(null)}>
-        <DialogContent className="sm:max-w-xl">
+        <DialogContent className="sm:max-w-xl" aria-describedby="photo-dialog-desc">
           <DialogHeader>
             <DialogTitle>Photo</DialogTitle>
+            <DialogDescription id="photo-dialog-desc">Full-size photo preview.</DialogDescription>
           </DialogHeader>
           {previewUrl && (
             <img src={previewUrl} alt="Vendor preview" className="w-full h-auto rounded-md" />

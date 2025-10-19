@@ -1,6 +1,6 @@
 const API_BASE = import.meta.env.VITE_API_BASE as string
 
-async function authHeader(): Promise<HeadersInit> {
+export async function authHeader(): Promise<HeadersInit> {
   try {
     const mod = await import('./supabase')
     const { supabase } = mod
@@ -28,6 +28,17 @@ export async function apiAuthed<T>(method: 'GET'|'POST'|'PUT'|'PATCH'|'DELETE', 
     method,
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
+  })
+  if (!res.ok) throw new Error(await res.text())
+  return res.json()
+}
+
+export async function apiAuthedForm<T>(path: string, form: FormData, method: 'POST'|'PUT' = 'POST'): Promise<T> {
+  const headers: HeadersInit = { ...(await authHeader()) }
+  const res = await fetch(`${API_BASE}${path}`, {
+    method,
+    headers,
+    body: form,
   })
   if (!res.ok) throw new Error(await res.text())
   return res.json()

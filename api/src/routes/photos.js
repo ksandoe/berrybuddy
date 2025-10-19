@@ -1,7 +1,10 @@
 const express = require('express');
+const multer = require('multer');
+const path = require('path');
 const { supabase } = require('../supabase');
 
 const router = express.Router();
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } }); // 10MB
 
 function requireSupabase(req, res) {
   if (!supabase) {
@@ -136,6 +139,65 @@ router.delete('/:id', requireAuth, async (req, res, next) => {
     if (error) return next(error);
     res.json(data);
   } catch (err) {
+    next(err);
+  }
+});
+
+// POST /photos/upload (owner-only; multipart form-data)
+router.post('/upload', requireAuth, upload.single('file'), async (req, res, next) => {
+  try {
+    if (!requireSupabase(req, res)) return;
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SECRET_KEY) {
+      return res.status(500).json({ error: 'CONFIG_ERROR', message: 'Missing SUPABASE_URL or SUPABASE_SECRET_KEY in server env' });
+    }
+    const userId = req.user.id;
+    const { vendor_id, berry_id, review_id, caption } = req.body || {};
+    if (!vendor_id) {
+      return res.status(400).json({ error: 'BadRequest', message: 'vendor_id is required' });
+    }
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({ error: 'BadRequest', message: 'file is required' });
+    }
+
+    const ext = path.extname(file.originalname || '').toLowerCase() || '.jpg';
+    const now = new Date();
+    const key = `${vendor_id}/${now.getUTCFullYear()}/${String(now.getUTCMonth()+1).padStart(2,'0')}/${now.getTime()}-${Math.random().toString(36).slice(2)}${ext}`;
+
+    const { data: upData, error: upErr } = await supabase
+      .storage
+      .from('berries')
+      .upload(key, file.buffer, { contentType: file.mimetype || 'image/jpeg', upsert: false });
+    if (upErr) {
+      console.error('Storage upload failed:', upErr);
+      return res.status(500).json({ error: 'StorageUploadFailed', message: upErr.message || String(upErr) });
+    }
+
+    const { data: pub } = supabase.storage.from('berries').getPublicUrl(key);
+    const publicUrl = pub?.publicUrl || null;
+
+    const payload = {
+      review_id: review_id || null,
+      vendor_id,
+      berry_id: berry_id || null,
+      photo_url: publicUrl,
+      thumbnail: null,
+      caption: caption || null,
+      uploaded_by: userId,
+    };
+
+    const { data, error } = await supabase
+      .from('photo')
+      .insert(payload)
+      .select('*')
+      .single();
+    if (error) {
+      console.error('Photo insert failed:', error);
+      return res.status(500).json({ error: 'PhotoInsertFailed', message: error.message || String(error) });
+    }
+    return res.status(201).json(data);
+  } catch (err) {
+    console.error('Unhandled upload error:', err);
     next(err);
   }
 });

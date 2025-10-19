@@ -31,7 +31,10 @@ app.use(async (req, res, next) => {
   }
 });
 
-// OpenAPI validation
+// Mount uploads/photos before OpenAPI validator so Multer can consume multipart bodies safely
+app.use('/photos', require('./routes/photos'));
+
+// OpenAPI validation (for other routes)
 const apiSpecPath = path.resolve(__dirname, '../berry-buddy-openapi.yaml');
 app.use(openapiValidator({ apiSpec: apiSpecPath, validateRequests: true, validateResponses: false }));
 
@@ -43,7 +46,6 @@ app.use('/vendors', require('./routes/vendors'));
 app.use('/profiles', require('./routes/profiles'));
 app.use('/prices', require('./routes/prices'));
 app.use('/reviews', require('./routes/reviews'));
-app.use('/photos', require('./routes/photos'));
 
 // Not found handler (let OpenAPI validator handle unknown routes too)
 app.use((req, res, next) => {
