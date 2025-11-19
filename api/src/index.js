@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const path = require('path');
+const fs = require('fs');
 const { middleware: openapiValidator } = require('express-openapi-validator');
 const { supabase } = require('./supabase');
 
@@ -34,12 +35,21 @@ app.use(async (req, res, next) => {
 // Mount uploads/photos before OpenAPI validator so Multer can consume multipart bodies safely
 app.use('/photos', require('./routes/photos'));
 
+// Simple favicon handler to avoid noisy errors
+app.get('/favicon.ico', (req, res) => res.status(204).end());
+
+// Health route should not be blocked by OpenAPI validation
+app.use('/', require('./routes/health'));
+
 // OpenAPI validation (for other routes)
 const apiSpecPath = path.resolve(__dirname, '../berry-buddy-openapi.yaml');
-app.use(openapiValidator({ apiSpec: apiSpecPath, validateRequests: true, validateResponses: false }));
+if (fs.existsSync(apiSpecPath)) {
+  app.use(openapiValidator({ apiSpec: apiSpecPath, validateRequests: true, validateResponses: false }));
+} else {
+  console.warn(`OpenAPI spec not found at ${apiSpecPath}; skipping request validation`);
+}
 
 // Routes
-app.use('/', require('./routes/health'));
 app.use('/auth', require('./routes/auth'));
 app.use('/berries', require('./routes/berries'));
 app.use('/vendors', require('./routes/vendors'));
@@ -60,7 +70,10 @@ app.use((err, req, res, next) => {
 });
 
 const port = process.env.PORT || 5000;
-app.listen(port, () => {
-  console.log(`Berry Buddy API listening on http://localhost:${port}`);
-});
+if (require.main === module) {
+  app.listen(port, () => {
+    console.log(`Berry Buddy API listening on http://localhost:${port}`);
+  });
+}
 
+module.exports = app;

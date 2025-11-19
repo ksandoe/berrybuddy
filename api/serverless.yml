@@ -1,0 +1,58 @@
+service: berry-buddy-api
+frameworkVersion: '4'
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: us-east-1
+  memorySize: 512
+  timeout: 30
+  httpApi:
+    cors:
+      allowedOrigins:
+        - https://main.d2l1p1lm5wjw4v.amplifyapp.com
+      allowedHeaders:
+        - Accept
+        - Content-Type
+        - Authorization
+      allowedMethods:
+        - OPTIONS
+        - GET
+        - POST
+        - PUT
+        - PATCH
+        - DELETE
+      allowCredentials: true
+  environment:
+    # Name of the secret in AWS Secrets Manager that contains your env vars
+    SECRETS_ID: berry-buddy/api/prod
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - secretsmanager:GetSecretValue
+          Resource:
+            - arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:berry-buddy/api/prod-*
+
+functions:
+  api:
+    handler: src/lambda.handler
+    events:
+      - httpApi:
+          path: /{proxy+}
+          method: ANY
+
+package:
+  patterns:
+    # Include the OpenAPI spec because src/index.js reads it at runtime
+    - berry-buddy-openapi.yaml
+    # Ensure source files are packaged
+    - src/**
+
+plugins:
+  - serverless-offline
+
+custom:
+  serverless-offline:
+    httpPort: 3000
