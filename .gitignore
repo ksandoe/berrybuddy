@@ -14,4 +14,5 @@ api/.env
 # Client envs
 client/.env
 client/.env.local
-client/.env.*.local
+client/.env.*.localclient/dist/
+api/.serverless/
