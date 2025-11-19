@@ -1,0 +1,177 @@
+{
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Sid": "CloudFormation",
+			"Effect": "Allow",
+			"Action": [
+				"cloudformation:ValidateTemplate",
+				"cloudformation:CreateStack",
+				"cloudformation:UpdateStack",
+				"cloudformation:DeleteStack",
+				"cloudformation:DescribeStacks",
+				"cloudformation:DescribeStackEvents",
+				"cloudformation:GetTemplate",
+				"cloudformation:ListStacks",
+				"cloudformation:CreateChangeSet",
+				"cloudformation:ExecuteChangeSet",
+				"cloudformation:DescribeChangeSet",
+				"cloudformation:DescribeStackResource",
+				"cloudformation:DescribeStackResources",
+				"cloudformation:ListStackResources"
+			],
+			"Resource": "*"
+		},
+		{
+			"Sid": "ServerlessSSM",
+			"Effect": "Allow",
+			"Action": [
+				"ssm:GetParameter",
+				"ssm:PutParameter"
+			],
+			"Resource": "arn:aws:ssm:us-east-1:*:parameter/serverless-framework/*"
+		},
+		{
+			"Sid": "S3CreateBucket",
+			"Effect": "Allow",
+			"Action": [
+				"s3:CreateBucket",
+				"s3:ListAllMyBuckets",
+				"s3:GetAccountPublicAccessBlock"
+			],
+			"Resource": "*"
+		},
+		{
+			"Sid": "S3BucketLevel",
+			"Effect": "Allow",
+			"Action": [
+				"s3:PutBucketPolicy",
+				"s3:PutBucketOwnershipControls",
+				"s3:PutBucketAcl",
+				"s3:PutBucketPublicAccessBlock",
+				"s3:GetBucketLocation",
+				"s3:GetBucketVersioning",
+				"s3:PutBucketVersioning",
+				"s3:ListBucket",
+				"s3:ListBucketVersions",
+				"s3:ListBucketMultipartUploads"
+			],
+			"Resource": [
+				"arn:aws:s3:::serverless-*"
+			]
+		},
+		{
+			"Sid": "S3ObjectLevel",
+			"Effect": "Allow",
+			"Action": [
+				"s3:GetObject",
+				"s3:GetObjectVersion",
+				"s3:PutObject",
+				"s3:PutObjectAcl",
+				"s3:AbortMultipartUpload",
+				"s3:DeleteObject",
+				"s3:DeleteObjectVersion"
+			],
+			"Resource": [
+				"arn:aws:s3:::serverless-*/*"
+			]
+		},
+		{
+			"Sid": "IamForStackRoles",
+			"Effect": "Allow",
+			"Action": [
+				"iam:CreateRole",
+				"iam:DeleteRole",
+				"iam:PassRole",
+				"iam:PutRolePolicy",
+				"iam:DeleteRolePolicy",
+				"iam:AttachRolePolicy",
+				"iam:DetachRolePolicy",
+				"iam:ListAttachedRolePolicies",
+				"iam:GetRole",
+				"iam:GetPolicy",
+				"iam:GetPolicyVersion",
+				"iam:TagRole",
+				"iam:UntagRole"
+			],
+			"Resource": "*"
+		},
+		{
+			"Sid": "LambdaForStack",
+			"Effect": "Allow",
+			"Action": [
+				"lambda:CreateFunction",
+				"lambda:UpdateFunctionCode",
+				"lambda:UpdateFunctionConfiguration",
+				"lambda:DeleteFunction",
+				"lambda:AddPermission",
+				"lambda:RemovePermission",
+				"lambda:GetFunction",
+				"lambda:GetFunctionConfiguration",
+				"lambda:ListFunctions",
+				"lambda:ListVersionsByFunction",
+				"lambda:PublishVersion",
+				"lambda:CreateAlias",
+				"lambda:UpdateAlias",
+				"lambda:DeleteAlias",
+				"lambda:CreateEventSourceMapping",
+				"lambda:DeleteEventSourceMapping",
+				"lambda:UpdateEventSourceMapping",
+				"lambda:TagResource",
+				"lambda:UntagResource"
+			],
+			"Resource": "*"
+		},
+		{
+			"Sid": "ApiGatewayForStack",
+			"Effect": "Allow",
+			"Action": [
+				"apigateway:GET",
+				"apigateway:POST",
+				"apigateway:PUT",
+				"apigateway:PATCH",
+				"apigateway:DELETE"
+			],
+			"Resource": "*"
+		},
+		{
+			"Sid": "Tagging",
+			"Effect": "Allow",
+			"Action": [
+				"tag:TagResources",
+				"tag:UntagResources"
+			],
+			"Resource": "*"
+		},
+		{
+			"Sid": "ApiGatewayAdmin",
+			"Effect": "Allow",
+			"Action": "apigateway:*",
+			"Resource": "*"
+		},
+		{
+			"Sid": "LogsReadForDebug",
+			"Effect": "Allow",
+			"Action": [
+				"logs:DescribeLogGroups",
+				"logs:DescribeLogStreams",
+				"logs:GetLogEvents",
+				"logs:FilterLogEvents"
+			],
+			"Resource": "*"
+		},
+		{
+			"Sid": "LogsForStack",
+			"Effect": "Allow",
+			"Action": [
+				"logs:CreateLogGroup",
+				"logs:PutRetentionPolicy",
+				"logs:DescribeLogGroups",
+				"logs:TagResource",
+				"logs:UntagResource",
+				"logs:DeleteLogGroup"
+			],
+			"Resource": "*"
+		}
+	]
+}

@@ -1,0 +1,33 @@
+DETAILS FOR PROMPT to generate lambda handler
+File name: api/src/lambda.js
+
+EXAMPLE PROMPT:
+“Create api/src/lambda.js that wraps the Express app with serverless-http. On cold start in Lambda, load JSON from AWS Secrets Manager (SecretId from env SECRETS_ID). When IS_OFFLINE is set, use dotenv and skip Secrets Manager. Wrap secret fetch/parse in try/catch so cold start never throws. Export handler.”
+
+
+DETAILS FOR PROMPT to generate serverless.yml
+ first, replace your details--do not save in project folder
+ 
+    frameworkVersion: '4'
+	provider: aws
+    runtime: nodejs20.x
+    region: us-east-1
+    memorySize: 512
+    timeout: 30
+	cors allowedOrigins:
+            - https://YOUR_AMPLIFY_DOMAIN]  # e.g., https://main.xxxxx.amplifyapp.com
+            - http://localhost:5173
+    SECRETS_ID: [YOUR PROJECT NAME]/api/prod
+	     Allow  - secretsmanager:GetSecretValue
+    functions.api 
+        handler: src/lambda.handler
+        event ANY /{proxy+}
+              method: ANY
+    package:
+        - [YOUR PROJECT NAME]-openapi.yaml
+    plugins:
+      - serverless-offline
+
+EXAMPLE PROMPT:
+“Create api/serverless.yml for Serverless v4. Provider aws, runtime nodejs20.x, region us-east-1, memory 512, timeout 30. Define `functions.api` with handler [src/lambda.handler]( and event `ANY /{proxy+}`. Configure HTTP API CORS to allow [your Amplify URL] origin and `http://localhost:5173`. Add an environment `SECRETS_ID` and an IAM statement granting the function `secretsmanager:GetSecretValue` on that secret. Include `serverless-offline` plugin and package the OpenAPI file.”
+
